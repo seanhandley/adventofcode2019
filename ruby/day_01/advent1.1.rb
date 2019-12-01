@@ -23,33 +23,37 @@
 #
 # What is the sum of the fuel requirements for all of the modules on your spacecraft?
 
-class FuelCounter
-  def fuel_requirements
-    modules.sum(&method(:fuel_cost))
+class FuelWeightCalculator
+  class << self
+    def calculate(weight)
+      new(weight).calculate
+    end
   end
 
-  def recursive_fuel_requirements
-    modules.sum(&method(:recursive_fuel_cost))
+  attr_reader :weight
+
+  def initialize(weight)
+    @weight = weight
+  end
+
+  def calculate
+    fuel_cost
   end
 
   private
 
-  def modules
-    @modules ||= STDIN.read.split.map(&:to_i)    
-  end
-
-  def fuel_cost(weight)
+  def fuel_cost
     weight / 3 - 2
-  end
-
-  def recursive_fuel_cost(weight)
-    cost = fuel_cost(weight)
-    return 0 unless cost.positive?
-
-    recursive_fuel_cost(cost) + cost
   end
 end
 
+module FuelCounter
+  def calculate(inputs)
+    inputs.split.map(&:to_i).sum(&FuelWeightCalculator.method(:calculate))
+  end
+  module_function :calculate
+end
+
 if __FILE__ == $0
-  puts FuelCounter.new.fuel_requirements
+  puts FuelCounter.calculate(STDIN.read)
 end

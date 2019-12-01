@@ -16,4 +16,14 @@
 
 require_relative "./advent1.1"
 
-puts FuelCounter.new.recursive_fuel_requirements
+class FuelWeightCalculator
+  def calculate
+    return 0 unless fuel_cost.positive?
+
+    FuelWeightCalculator.calculate(fuel_cost) + fuel_cost
+  end
+end
+
+if __FILE__ == $0
+  puts FuelCounter.calculate(STDIN.read)
+end
