@@ -16,14 +16,11 @@
 
 require_relative "./advent1.1"
 
-class FuelWeightCalculator
-  def calculate
-    return 0 unless fuel_cost.positive?
-
-    FuelWeightCalculator.calculate(fuel_cost) + fuel_cost
-  end
+cost_function = -> (weight) do
+  weight = weight / 3 - 2
+  weight.positive? ? cost_function.(weight) + weight : 0
 end
 
 if __FILE__ == $0
-  puts FuelCounter.calculate(STDIN.read)
+  puts FuelCounter.calculate(STDIN.read, cost_function)
 end
