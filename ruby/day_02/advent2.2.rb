@@ -19,41 +19,21 @@
 #
 # Find the input noun and verb that cause the program to produce the output 19690720. What is 100 * noun + verb? (For example, if noun=12 and verb=2, the answer would be 1202.)
 
+require_relative "./advent2.1"
+
+# 20th July 1969, Apollo 11 lands on the moon.
+TARGET = 1969_07_20
+RANGE = 0..99
+
 def program
   (@program ||= STDIN.read.split(",").map(&:to_i)).dup
 end
 
-def execute(memory, noun, verb)
-  pos = 0
-  memory[1] = noun
-  memory[2] = verb
-
-  loop do
-    case memory[pos]
-    when 1
-      memory[memory[pos + 3]] = memory[memory[pos + 1]] + memory[memory[pos + 2]]
-    when 2
-      memory[memory[pos + 3]] = memory[memory[pos + 1]] * memory[memory[pos + 2]]
-    when 99
-      return memory[0]
-    else
-      raise "Unknown instruction #{memory[pos]} at position #{pos}. Noun: #{noun}, Verb: #{verb}"
-    end
-    pos += 4
-  end
-end
-
-target = 19690720
-
-(0..99).each do |noun|
-  (0..99).each do |verb|
-    if execute(program, noun, verb) == target
+RANGE.to_a.shuffle.each do |noun|
+  RANGE.to_a.shuffle.each do |verb|
+    if Computer.execute(program, noun, verb) == TARGET
       puts 100 * noun + verb
-      exit
+      break
     end
   end
 end
-
-
-# if __FILE__ == $0
-# end

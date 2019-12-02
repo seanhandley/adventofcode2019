@@ -51,29 +51,55 @@
 #
 # Once you have a working computer, the first step is to restore the gravity assist program (your puzzle input) to the "1202 program alarm" state it had just before the last computer caught fire. To do this, before running the program, replace position 1 with the value 12 and replace position 2 with the value 2. What value is left at position 0 after the program halts?
 
-program = STDIN.read.split(",").map(&:to_i)
+class Computer
+  INCR = 4
 
-program[1] = 12
-program[2] = 2
-
-pos = 0
-
-loop do
-  case program[pos]
-  when 1
-    program[program[pos + 3]] = program[program[pos + 1]] + program[program[pos + 2]]
-  when 2
-    program[program[pos + 3]] = program[program[pos + 1]] * program[program[pos + 2]]
-  when 99
-    puts program[0]
-    exit
-  else
-    puts "Unknown instruction #{program[pos]} at position #{pos}"
-    exit
+  def initialize(program, noun, verb)
+    @memory = program
+    @noun = noun
+    @verb = verb
+    @pos = 0
+    @memory[1] = noun
+    @memory[2] = verb
   end
-  pos += 4
+
+  def self.execute(program, noun, verb)
+    new(program, noun, verb).execute
+  end
+
+  def execute
+    loop do
+      instr, operands, output_loc = decode
+      unless instr
+        raise "Unknown instruction #{@instr} at position #{@pos}. Noun: #{@noun}, Verb: #{@verb}"
+      end
+      instr.(*operands).tap do |result|
+        return @memory[0] if result == :halt
+        @memory[output_loc] = result
+      end
+      @pos += INCR
+    end
+  end
+
+  private
+
+  def decode
+    [
+      instruction(@memory[@pos]),
+      [1, 2].map { |n| @memory[@memory[@pos + n]] },
+      @memory[@pos + 3],
+    ]
+  end
+
+  def instruction(number)
+    {
+      1 => -> (a, b) { a + b },
+      2 => -> (a, b) { a * b },
+      99 => -> (*) { :halt }
+    }[number]
+  end
 end
 
-# if __FILE__ == $0
-  
-# end
+if __FILE__ == $0
+  puts Computer.execute(STDIN.read.split(",").map(&:to_i), 12, 2)
+end
