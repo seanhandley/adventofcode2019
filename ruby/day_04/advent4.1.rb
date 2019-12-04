@@ -21,13 +21,13 @@
 class PasswordValidator
   attr_reader :range
 
-  def initialize(start, stop, rules = nil)
+  def initialize(start, stop)
     @range = Range.new(start, stop)
-    @rules = Rules.new(rules)
+    @rules = Array.new
   end
 
   def add_rule(rule)
-    @rules.add(rule)
+    @rules.append(rule)
     self
   end
 
@@ -36,38 +36,24 @@ class PasswordValidator
   end
 
   def valid?(password)
-    @rules.valid?(password)
-  end
-
-  class Rules
-    DEFAULT_RULES = [
-      -> (password) do
-        repeating = false
-        password.chars.each_cons(2) do |a, b|
-          repeating = true if a == b
-          return false if a > b
-        end
-        return false unless repeating
-        true
-      end
-    ]
-
-    def initialize(rules = nil)
-      @rules = rules || DEFAULT_RULES
-    end
-
-    def add(rule)
-      @rules << rule
-    end
-
-    def valid?(password)
-      @rules.all? { |rule| rule.(password) }
-    end
+    @rules.all? { |rule| rule.(password.chars) }
   end
 end
 
-INPUT = STDIN.read.split("-").freeze
+no_decreasing_digits = -> (password) do
+  # Ensure there are no sequences of decreasing digits
+  password.slice_when { |a, b| a <= b }.count == password.length
+end
+
+repeating_digits = -> (password) do
+  # Ensure there is at least one contiguous repeating digit
+  password.slice_when { |a, b| a != b }.count < password.length
+end
+
+@pv = PasswordValidator.new(*STDIN.read.split("-")).
+  add_rule(no_decreasing_digits).
+  add_rule(repeating_digits)
 
 if __FILE__ == $0
-  p PasswordValidator.new(*INPUT).valid_password_count
+  p @pv.valid_password_count
 end

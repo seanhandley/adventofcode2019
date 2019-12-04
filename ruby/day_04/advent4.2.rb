@@ -14,15 +14,10 @@
 
 require_relative "./advent4.1"
 
-runs = -> (password) do
-  password.chars.each_with_object([[]]) do |char, runs|
-    run = runs.last
-    if run.empty? || run.include?(char)
-      run.append(char)
-    else
-      runs.append([char])
-    end
-  end.any? { |run| run.count == 2 }
+repeats_only_twice = -> (password) do
+  # Ensure there is at least one digit that repeats no more than twice contiguously
+  password.slice_when { |a, b| a != b }.any? { |run| run.count == 2 }
 end
 
-p PasswordValidator.new(*INPUT).add_rule(runs).valid_password_count
+@pv.add_rule(repeats_only_twice)
+p @pv.valid_password_count
