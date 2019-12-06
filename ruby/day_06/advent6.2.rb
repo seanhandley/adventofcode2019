@@ -2,9 +2,9 @@
 
 require_relative "./advent6.1"
 
-san = @com.find("SAN")
-you = @com.find("YOU")
+san = Tree.instance.find("SAN")
+you = Tree.instance.find("YOU")
 
-first_common = (san.parents.map(&:name) & you.parents.map(&:name)).first
+first_common = [san, you].map { |node| node.parents.map(&:name) }.reduce(:&).first
 
-p san.distance_to(first_common) + you.distance_to(first_common) - 2
+p [san, you].sum { |node| node.distance_to(first_common) } - 2

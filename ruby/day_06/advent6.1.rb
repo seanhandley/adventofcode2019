@@ -56,76 +56,98 @@
 #
 # What is the total number of direct and indirect orbits in your map data?
 
-class Node
-  attr_reader :name, :children, :depth, :parent
+module Tree
+  class Node
+    attr_reader :name, :children, :depth, :parent
 
-  def initialize(name, depth = 0, parent = nil)
-    @name = name
-    @depth = depth
-    @parent = parent
-    @children = []
-  end
-
-  def find(node_name)
-    if node_name == name
-      return self
-    else
-      children.map do |child|
-        if res = child.find(node_name)
-          return res
-        end
-      end.first
+    def initialize(name, depth = 0, parent = nil)
+      @name = name
+      @depth = depth
+      @parent = parent
+      @children = []
     end
-  end
 
-  def insert(new_name, parent_name, depth = 1)
-    if parent_name == name
-      add_child(Node.new(new_name, depth, self))
-      true
-    else
-      children.map do |child|
-        child.insert(new_name, parent_name, depth + 1)
-      end.any?
+    def find(node_name)
+      if node_name == name
+        return self
+      else
+        children.map do |child|
+          if res = child.find(node_name)
+            return res
+          end
+        end.first
+      end
     end
-  end
 
-  def add_child(node)
-    @children << node
-  end
+    def insert(new_name, parent_name, depth = 1)
+      if parent_name == name
+        @children << Node.new(new_name, depth, self)
+      else
+        children.map do |child|
+          child.insert(new_name, parent_name, depth + 1)
+        end.any?
+      end
+    end
 
-  def total_depth
-    children.sum do |node|
-      node.total_depth
-    end + depth
-  end
+    def total_depth
+      children.sum do |node|
+        node.total_depth
+      end + depth
+    end
 
-  def parents
-    return [] unless parent
-    [parent] + parent.parents
-  end
+    def parents
+      return [] unless parent
+      [parent] + parent.parents
+    end
 
-  def distance_to(parent_name)
-    if parent.name == parent_name
-      1
-    else
+    def distance_to(parent_name)
+      return 1 if parent.name == parent_name
+
       1 + parent.distance_to(parent_name)
     end
   end
-end
 
-data = STDIN.read.split.map { |entry| entry.split(")") }
+  class << self
+    FILE_NAME = "tree.dat"
 
-@com = Node.new("COM")
+    def instance
+      @tree ||= load_tree || build_tree
+    end
 
-# Build tree naively
-loop do
-  break if data.none?
-  inserted = data.select do |parent_name, name|
-    @com.insert(name, parent_name)
+    private
+
+    def build_tree
+      print "Building tree"
+      data = STDIN.read.split.map { |entry| entry.split(")") }
+      com = Node.new("COM")
+
+      loop do
+        break if data.none?
+        inserted = data.select do |parent_name, name|
+          com.insert(name, parent_name)
+        end
+        data -= inserted
+        print "."
+      end
+      save_tree(com)
+      puts "done!"
+      com
+    end
+
+    def load_tree
+      if File.exist?(FILE_NAME)
+        Marshal.load(File.read(FILE_NAME)).tap { puts "Loaded tree from disk" }
+      end
+    end
+
+    def save_tree(tree)
+      File.open(FILE_NAME, "w") do |file|
+        file.puts Marshal.dump(tree)
+      end
+    end
   end
-  data = data - inserted
 end
 
 if __FILE__ == $0
-  p @com.total_depth
+  p Tree.instance.total_depth
 end
