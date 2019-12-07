@@ -44,5 +44,6 @@
 require_relative "./advent5.1"
 
 if __FILE__ == $0
-  Computer.execute(STDIN.read.split(",").map(&:to_i), 5)
+  input_device = -> () { (@inputs ||= [5]).shift }
+  Computer.new(STDIN.read.split(",").map(&:to_i), input_device).execute
 end

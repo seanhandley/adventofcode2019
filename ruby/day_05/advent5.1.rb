@@ -51,14 +51,11 @@
 #
 # After providing 1 to the only input instruction and passing all the tests, what diagnostic code does the program produce?
 class Computer
-  def initialize(program, input)
+  def initialize(program, input = nil, output = nil)
     @memory = program
-    @input = input
+    @input = input || -> () { get_input_tty }
+    @output = output || -> (msg) { puts msg }
     @pos = 0
-  end
-
-  def self.execute(program, input)
-    new(program, input).execute
   end
 
   def execute
@@ -66,6 +63,8 @@ class Computer
       instr, operands = decode
       instr.(*operands)
     end
+  rescue => e
+    0
   end
 
   private
@@ -104,17 +103,31 @@ class Computer
     {
       1 => -> (a, b, c) { @memory[c] = a + b; @pos += 4 },
       2 => -> (a, b, c) { @memory[c] = a * b; @pos += 4 },
-      3 => -> (a) { @memory[a] = @input; @pos += 2 },
-      4 => -> (a) { puts a; @pos += 2 },
+      3 => -> (a) { @memory[a] = get_input; @pos += 2 },
+      4 => -> (a) { write_output(a); @pos += 2 },
       5 => -> (a, b) { a.nonzero? ? @pos = b : @pos += 3 },
       6 => -> (a, b) { a.zero? ? @pos = b : @pos += 3 },
       7 => -> (a, b, c) { @memory[c] = (a < b) ? 1 : 0 ; @pos += 4 },
       8 => -> (a, b, c) { @memory[c] = (a == b) ? 1 : 0 ; @pos += 4 },
-      99 => -> () { exit }
+      99 => -> () { raise "halt" }
     }[number]
+  end
+
+  def get_input_tty
+    print "Input: "
+    open('/dev/tty') { |f| f.gets.chomp.to_i }
+  end
+
+  def get_input
+    @input.call
+  end
+
+  def write_output(msg)
+    @output.call(msg)
   end
 end
 
 if __FILE__ == $0
-  Computer.execute(STDIN.read.split(",").map(&:to_i), 1)
+  input_device = -> () { (@inputs ||= [1]).shift }
+  Computer.new(STDIN.read.split(",").map(&:to_i), input_device).execute
 end
