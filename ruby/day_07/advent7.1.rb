@@ -46,34 +46,35 @@
 #
 # Try every combination of phase settings on the amplifiers. What is the highest signal that can be sent to the thrusters?
 
-require_relative "../day_05/advent5.1"
+require_relative "../utils/computer"
 
-def program
-  (@program ||= STDIN.read.split(",").map(&:to_i)).dup
-end
+module LinkedAmplifiers
+  class << self
+    def highest_possible_output
+      find_all_amplifier_phase_permutations.max
+    end
 
-def permutations
-  (0..4).to_a.permutation(5)
-end
+    private
 
-def find_possible_outputs
-  permutations.map do |a, b, c, d, e|
-    @output = 0
-    @output_device = -> (msg) { @output = msg }
-    @a = [a, @output]
-    Computer.new(program, -> () { @a.shift }, @output_device).execute
-    @b = [b, @output]
-    Computer.new(program, -> () { @b.shift }, @output_device).execute
-    @c = [c, @output]
-    Computer.new(program, -> () { @c.shift }, @output_device).execute
-    @d = [d, @output]
-    Computer.new(program, -> () { @d.shift }, @output_device).execute
-    @e = [e, @output]
-    Computer.new(program, -> () { @e.shift }, @output_device).execute
-    @output
+    def phase_permutations
+      (0..4).to_a.permutation(5)
+    end
+
+    def find_all_amplifier_phase_permutations
+      phase_permutations.map do |phase_permutation|
+        @output = 0
+        phase_permutation.each do |phase|
+          Computer.new(output: -> (msg) { @output = msg }).
+            receive(phase).
+            receive(@output).
+            execute
+        end
+        @output
+      end
+    end
   end
 end
 
 if __FILE__ == $0
-  p find_possible_outputs.max
+  p LinkedAmplifiers.highest_possible_output
 end

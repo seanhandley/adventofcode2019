@@ -41,9 +41,8 @@
 #
 # What is the diagnostic code for system ID 5?
 
-require_relative "./advent5.1"
+require_relative "../utils/computer"
 
 if __FILE__ == $0
-  input_device = -> () { (@inputs ||= [5]).shift }
-  Computer.new(STDIN.read.split(",").map(&:to_i), input_device).execute
+  Computer.new.receive(5).execute
 end

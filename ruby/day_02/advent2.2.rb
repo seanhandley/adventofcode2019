@@ -25,15 +25,15 @@ require_relative "./advent2.1"
 TARGET = 1969_07_20
 RANGE = 0..99
 
-def program
-  (@program ||= STDIN.read.split(",").map(&:to_i)).dup
-end
-
 RANGE.to_a.shuffle.each do |noun|
   RANGE.to_a.shuffle.each do |verb|
-    if Computer.execute(program, noun, verb) == TARGET
+    memory = Computer.fetch_program_from_stdin
+    memory[1] = noun
+    memory[2] = verb
+    Computer.new(program: memory).execute
+    if memory.first == TARGET
       puts 100 * noun + verb
-      break
+      exit
     end
   end
 end

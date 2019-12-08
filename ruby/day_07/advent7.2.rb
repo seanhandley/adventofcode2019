@@ -38,61 +38,72 @@
 #
 # Try every combination of the new phase settings on the amplifier feedback loop. What is the highest signal that can be sent to the thrusters?
 
-require_relative "../day_05/advent5.1"
+require_relative "../utils/computer"
 
-def program
-  (@program ||= STDIN.read.split(",").map(&:to_i)).dup
-end
+module FeedbackLoopLinkedAmplifiers
+  class << self
+    def highest_possible_output
+      find_all_amplifier_phase_permutations.max
+    end
 
-def permutations
-  (5..9).to_a.permutation(5)
-end
+    private
 
-def find_possible_outputs
-  permutations.map do |permutation|
-    looped_execution(*permutation)
+    def phase_permutations
+      (5..9).to_a.permutation(5)
+    end
+
+    def find_all_amplifier_phase_permutations
+      phase_permutations.map do |phase_permutation|
+        run_amplifiers(phase_permutation)
+      end
+    end
+
+    def run_amplifiers(permutation)
+      setup = setup_amplifiers(permutation)
+      setup.fetch(:amplifiers).values.map(&:execute_async).each(&:join)
+      setup.fetch(:outputs).last
+    end
+
+    def setup_amplifiers(permutation)
+      config.each_with_object({amplifiers: {}, outputs: []}) do |(name, values), setup|
+        amplifier = Computer.new(output: -> (data) do
+          setup[:amplifiers][values[:output]].receive(data)
+          setup[:outputs] << data
+        end)
+        amplifier.receive(permutation[values[:phase]])
+        amplifier.receive(values[:starting_input]) if values[:starting_input]
+        setup[:amplifiers][name] = amplifier
+      end
+    end
+
+    def config
+      {
+        a: {
+          phase: 0,
+          starting_input: 0,
+          output: :b
+        },
+        b: {
+          phase: 1,
+          output: :c
+        },
+        c: {
+          phase: 2,
+          output: :d
+        },
+        d: {
+          phase: 3,
+          output: :e
+        },
+        e: {
+          phase: 4,
+          output: :a
+        }
+      }
+    end
   end
 end
 
-def looped_execution(a, b, c, d, e)
-  @in_queue_a = Queue.new
-  @in_queue_a.push a
-  @in_queue_a.push 0
-  @input_device_a = -> { @in_queue_a.pop }
-  @output_device_a = -> (data) { @in_queue_b.push(data) }
-
-  @in_queue_b = Queue.new
-  @in_queue_b.push b
-  @input_device_b = -> { @in_queue_b.pop }
-  @output_device_b = -> (data) { @in_queue_c.push(data) }
-
-  @in_queue_c = Queue.new
-  @in_queue_c.push c
-  @input_device_c = -> { @in_queue_c.pop }
-  @output_device_c = -> (data) { @in_queue_d.push(data) }
-
-  @in_queue_d = Queue.new
-  @in_queue_d.push d
-  @input_device_d = -> { @in_queue_d.pop }
-  @output_device_d = -> (data) { @in_queue_e.push(data) }
-
-  @in_queue_e = Queue.new
-  @in_queue_e.push e
-  @input_device_e = -> { @in_queue_e.pop }
-  @output_device_e = -> (data) { @in_queue_a.push(data) }
-
-  threads = []
-
-  threads << Thread.new { Computer.new(program, @input_device_a, @output_device_a).execute }
-  threads << Thread.new { Computer.new(program, @input_device_b, @output_device_b).execute }
-  threads << Thread.new { Computer.new(program, @input_device_c, @output_device_c).execute }
-  threads << Thread.new { Computer.new(program, @input_device_d, @output_device_d).execute }
-  threads << Thread.new { Computer.new(program, @input_device_e, @output_device_e).execute }
-
-  threads.each { |t| t.join }
-  @in_queue_a.pop
-end
-
 if __FILE__ == $0
-  p find_possible_outputs.max
+  p FeedbackLoopLinkedAmplifiers.highest_possible_output
 end
