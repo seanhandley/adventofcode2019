@@ -1,17 +1,20 @@
 #!/usr/bin/env ruby
 
-pixels = STDIN.read.chars.map(&:to_i)
+WIDTH = 25
+HEIGHT = 6
 
-WIDTH=25
-HEIGHT=6
-RESOLUTION = HEIGHT * WIDTH
+def layers
+  @layers ||= STDIN.read.
+                    chars.
+                    map(&:to_i).
+                    each_slice(HEIGHT * WIDTH)
+end
 
-@layers = pixels.each_slice(RESOLUTION).to_a
+def fewest_zeroes
+  layers.min_by { |layer| layer.count(&:zero?) }
+end
 
 if __FILE__ == $0
-  fewest_zeroes = @layers.min_by do |layer|
-    layer.count(&:zero?)
-  end
-
-  p fewest_zeroes.count { |el| el == 1 } * fewest_zeroes.count { |el| el == 2 }
+  p fewest_zeroes.count { |el| el == 1 } *
+    fewest_zeroes.count { |el| el == 2 }
 end
