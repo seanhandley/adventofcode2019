@@ -66,7 +66,7 @@ module FeedbackLoopLinkedAmplifiers
 
     def setup_amplifiers(permutation)
       config.each_with_object({amplifiers: {}, outputs: []}) do |(name, values), setup|
-        amplifier = Computer.new(output: -> (data) do
+        amplifier = Computer.new(id: name, output: -> (data) do
           setup[:amplifiers][values[:output]].receive(data)
           setup[:outputs] << data
         end)

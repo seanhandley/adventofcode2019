@@ -1,9 +1,13 @@
+require "securerandom"
+
 class Computer
-  def initialize(program: nil, output: nil)
+  def initialize(program: nil, output: nil, id: nil, debug: false)
+    @id = id || SecureRandom.hex(4)
     @queue = Queue.new
     @memory = program || Computer.fetch_program_from_stdin
     @output = output || -> (msg) { puts msg }
     @pos = 0
+    @debug = debug
   end
 
   def receive(input)
@@ -14,7 +18,8 @@ class Computer
   def execute_async
     Thread.new do
       loop do
-        instr, operands = decode
+        instr_number, instr, operands = decode
+        debug "[#{@id}] #{instr_name(instr_number)}(#{operands.join(', ')})"
         instr.(*operands)
       end
     end
@@ -31,7 +36,7 @@ class Computer
   private
 
   def decode
-    [executable_instruction, operands]
+    [instr_number, executable_instruction, operands]
   end
 
   def executable_instruction
@@ -40,7 +45,7 @@ class Computer
 
   def operands
     executable_instruction.arity.times.map do |i|
-      if operand_modes[i] == 1 || instr_number == 3
+      if operand_modes[i] == 1 || instr_number == 3 # hack!
         @memory[@pos + i + 1]
       else
         @memory[@memory[@pos + i + 1]]
@@ -64,7 +69,7 @@ class Computer
     {
       1 => -> (a, b, c) { @memory[c] = a + b; @pos += 4 },
       2 => -> (a, b, c) { @memory[c] = a * b; @pos += 4 },
-      3 => -> (a) { @memory[a] = get_input; @pos += 2 },
+      3 => -> (a) { @memory[a] = @queue.pop; @pos += 2 },
       4 => -> (a) { write_output(a); @pos += 2 },
       5 => -> (a, b) { a.nonzero? ? @pos = b : @pos += 3 },
       6 => -> (a, b) { a.zero? ? @pos = b : @pos += 3 },
@@ -74,11 +79,25 @@ class Computer
     }[number]
   end
 
-  def get_input
-    @queue.pop
+  def instr_name(number)
+    {
+      1 => "ADD",
+      2 => "MUL",
+      3 => "READ",
+      4 => "WRITE",
+      5 => "JNZ",
+      6 => "JEZ",
+      7 => "LT",
+      8 => "EQ",
+      99 => "HALT",
+    }[number]
   end
 
   def write_output(msg)
     @output.call(msg)
+  end
+
+  def debug(msg)
+    puts msg if @debug
   end
 end
