@@ -19,7 +19,7 @@ class Computer
     Thread.new do
       loop do
         instr_number, instr, operands = decode
-        debug "[#{@id}] #{instr_name(instr_number)}(#{operands.join(', ')})"
+        debug "#{instr_name(instr_number)}(#{operands.join(', ')})"
         instr.(*operands)
       end
     end
@@ -46,9 +46,15 @@ class Computer
   def operands
     executable_instruction.arity.times.map do |i|
       if operand_modes[i] == 1 || instr_number == 3 # hack!
-        @memory[@pos + i + 1]
+        loc = @pos + i + 1
+        @memory[loc].tap do |val|
+          debug "READ[#{loc}] => #{val}"
+        end
       else
-        @memory[@memory[@pos + i + 1]]
+        loc = @memory[@pos + i + 1]
+        @memory[loc].tap do |val|
+          debug "READ[#{loc}] => #{val}"
+        end
       end
     end
   end
@@ -67,24 +73,29 @@ class Computer
 
   def fetch_instruction(number)
     {
-      1 => -> (a, b, c) { @memory[c] = a + b; @pos += 4 },
-      2 => -> (a, b, c) { @memory[c] = a * b; @pos += 4 },
-      3 => -> (a) { @memory[a] = @queue.pop; @pos += 2 },
+      1 => -> (a, b, c) { store(a + b, c); @pos += 4 },
+      2 => -> (a, b, c) { store(a * b, c); @pos += 4 },
+      3 => -> (a) { store(@queue.pop, a); @pos += 2 },
       4 => -> (a) { write_output(a); @pos += 2 },
       5 => -> (a, b) { a.nonzero? ? @pos = b : @pos += 3 },
       6 => -> (a, b) { a.zero? ? @pos = b : @pos += 3 },
-      7 => -> (a, b, c) { @memory[c] = (a < b) ? 1 : 0 ; @pos += 4 },
-      8 => -> (a, b, c) { @memory[c] = (a == b) ? 1 : 0 ; @pos += 4 },
+      7 => -> (a, b, c) { store(a < b ? 1 : 0, c) ; @pos += 4 },
+      8 => -> (a, b, c) { store(a == b ? 1 : 0, c) ; @pos += 4 },
       99 => -> () { Thread.exit }
     }[number]
+  end
+
+  def store(value, location)
+    @memory[location] = value
+    debug "WRITE[#{location}] <= #{value}"
   end
 
   def instr_name(number)
     {
       1 => "ADD",
       2 => "MUL",
-      3 => "READ",
-      4 => "WRITE",
+      3 => "IN",
+      4 => "OUT",
       5 => "JNZ",
       6 => "JEZ",
       7 => "LT",
@@ -98,6 +109,6 @@ class Computer
   end
 
   def debug(msg)
-    puts msg if @debug
+    puts "[#{@id}] #{msg}" if @debug
   end
 end
