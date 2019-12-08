@@ -23,6 +23,14 @@ To run from repository root directory:
 
 ### Ruby
 
-`cat ruby/day_01/input.txt  | ruby/day_01/advent1.1.rb`
+`cat ruby/day_1/input.txt  | ruby/day_1/advent1.1.rb`
 
-[http://adventofcode.com](http://adventofcode.com)
+Check all the output by running the check script
+
+    ./check.sh
+    OK DAY 1.1
+    OK DAY 1.2
+    OK DAY 2.1
+    FAIL DAY 2.2
+    FAIL DAY 3.1
+
