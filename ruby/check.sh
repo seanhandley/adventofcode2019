@@ -5,21 +5,21 @@ function test {
   FILE="output$1.1.txt"
   EXPECTED=$(cat $FILE)
   CMD="./advent$1.1.rb"
-  ACTUAL=$(cat input.txt | $CMD | tail -1)
+  ACTUAL=$(cat input.txt | $CMD)
 
   if [[ $EXPECTED == $ACTUAL ]]
   then echo "OK DAY $1.1"
-  else echo "FAIL DAY $1.1"
+  else echo "FAIL DAY $1.1"; echo "EXPECTED: \n'$EXPECTED'"; echo "ACTUAL: \n'$ACTUAL'"
   fi
 
   FILE="output$1.2.txt"
   EXPECTED=$(cat $FILE)
   CMD="./advent$1.2.rb"
-  ACTUAL=$(cat input.txt | $CMD | tail -1)
+  ACTUAL=$(cat input.txt | $CMD)
 
   if [[ $EXPECTED == $ACTUAL ]]
   then echo "OK DAY $1.2"
-  else echo "FAIL DAY $1.2"
+  else echo "FAIL DAY $1.2"; echo "EXPECTED: \n'$EXPECTED'"; echo "ACTUAL: \n'$ACTUAL'"
   fi
 
   popd > /dev/null
@@ -32,4 +32,4 @@ test 4
 test 5
 test 6
 test 7
-# test 8 # This outputs ASCII art
+test 8
