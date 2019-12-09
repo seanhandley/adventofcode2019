@@ -8,6 +8,7 @@ class Computer
     @output = output || -> (msg) { puts msg }
     @pos = 0
     @debug = debug
+    @relative_base = 0
   end
 
   def receive(input)
@@ -19,8 +20,12 @@ class Computer
     Thread.new do
       loop do
         instr_number, instr, operands = decode
+        debug "RAW: #{raw_instruction}"
         debug "#{instr_name(instr_number)}(#{operands.join(', ')})"
         instr.(*operands)
+      rescue => e
+        debug(e)
+        raise
       end
     end
   end
@@ -30,7 +35,11 @@ class Computer
   end
 
   def self.fetch_program_from_stdin
-    (@program ||= STDIN.read.split(",").map(&:to_i)).dup
+    (@program ||= STDIN.read.split(",").map(&:to_i)).dup + blank_memory
+  end
+
+  def self.blank_memory
+    Array.new(10_000) { 0 }
   end
 
   private
@@ -45,12 +54,15 @@ class Computer
 
   def operands
     executable_instruction.arity.times.map do |i|
-      loc = if operand_modes[i] == 1 || instr_number == 3 # hack!
-              @pos + i + 1
-            else
+      loc = case operand_modes[i]
+            when 0
               @memory[@pos + i + 1]
+            when 1
+              @pos + i + 1
+            when 2
+              @relative_base + @memory[@pos + i + 1]
             end
-      @memory[loc].tap do |val|
+      loc.tap do |val|
         debug "READ[#{loc}] => #{val}"
       end
     end
@@ -61,7 +73,7 @@ class Computer
   end
 
   def operand_modes
-    raw_instruction[0, 3].chars.map(&:to_i).reverse.tap { |m| m[2] = 1 }
+    raw_instruction[0, 3].chars.map(&:to_i).reverse
   end
 
   def raw_instruction
@@ -70,14 +82,15 @@ class Computer
 
   def fetch_instruction(number)
     {
-      1 => -> (a, b, c) { store(a + b, c); @pos += 4 },
-      2 => -> (a, b, c) { store(a * b, c); @pos += 4 },
+      1 => -> (a, b, c) { store(@memory[a] + @memory[b], c); @pos += 4 },
+      2 => -> (a, b, c) { store(@memory[a] * @memory[b], c); @pos += 4 },
       3 => -> (a) { store(@in.pop, a); @pos += 2 },
-      4 => -> (a) { @output.call(a); @pos += 2 },
-      5 => -> (a, b) { a.nonzero? ? @pos = b : @pos += 3 },
-      6 => -> (a, b) { a.zero? ? @pos = b : @pos += 3 },
-      7 => -> (a, b, c) { store(a < b ? 1 : 0, c) ; @pos += 4 },
-      8 => -> (a, b, c) { store(a == b ? 1 : 0, c) ; @pos += 4 },
+      4 => -> (a) { @output.call(@memory[a]); @pos += 2 },
+      5 => -> (a, b) { @memory[a].nonzero? ? @pos = @memory[b] : @pos += 3 },
+      6 => -> (a, b) { @memory[a].zero? ? @pos = @memory[b] : @pos += 3 },
+      7 => -> (a, b, c) { store(@memory[a] < @memory[b] ? 1 : 0, c) ; @pos += 4 },
+      8 => -> (a, b, c) { store(@memory[a] == @memory[b] ? 1 : 0, c) ; @pos += 4 },
+      9 => -> (a) { @relative_base += @memory[a]; @pos += 2 },
       99 => -> () { Thread.exit }
     }[number]
   end
@@ -97,6 +110,7 @@ class Computer
       6 => "JEZ",
       7 => "LT",
       8 => "EQ",
+      9 => "RB",
       99 => "HALT",
     }[number]
   end
