@@ -5,7 +5,7 @@ class Computer
     @id = id || SecureRandom.hex(4)
     @in = Queue.new
     @memory = program || Computer.fetch_program_from_stdin
-    @output = output || -> (msg) { puts msg }
+    @output = output || -> (msg) { puts msg unless @debug }
     @pos = 0
     @debug = debug
     @relative_base = 0
@@ -35,11 +35,7 @@ class Computer
   end
 
   def self.fetch_program_from_stdin
-    (@program ||= STDIN.read.split(",").map(&:to_i)).dup + blank_memory
-  end
-
-  def self.blank_memory
-    Array.new(10_000) { 0 }
+    (@program ||= STDIN.read.split(",").map(&:to_i)).dup
   end
 
   private
@@ -64,6 +60,11 @@ class Computer
             end
       loc.tap do |val|
         debug "READ[#{loc}] => #{val}"
+        if loc >= @memory.count
+          until @memory.count == loc
+            @memory << 0
+          end
+        end
       end
     end
   end
@@ -91,7 +92,7 @@ class Computer
       7 => -> (a, b, c) { store(@memory[a] < @memory[b] ? 1 : 0, c) ; @pos += 4 },
       8 => -> (a, b, c) { store(@memory[a] == @memory[b] ? 1 : 0, c) ; @pos += 4 },
       9 => -> (a) { @relative_base += @memory[a]; @pos += 2 },
-      99 => -> () { Thread.exit }
+      99 => -> () { debug("CORE DUMP: #{@memory}") ; Thread.exit }
     }[number]
   end
 
