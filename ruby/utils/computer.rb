@@ -19,10 +19,7 @@ class Computer
   def execute_async
     Thread.new do
       loop do
-        instr_number, instr, operands = decode
-        debug "RAW: #{raw_instruction}"
-        debug "#{instr_name(instr_number)}(#{operands.join(', ')})"
-        instr.(*operands)
+        executable_instruction.(*operands)
       rescue => e
         debug(e)
         raise
@@ -31,7 +28,7 @@ class Computer
   end
 
   def execute
-    execute_async.join
+    execute_async.join(30)
   end
 
   def self.fetch_program_from_stdin
@@ -40,26 +37,25 @@ class Computer
 
   private
 
-  def decode
-    [instr_number, executable_instruction, operands]
-  end
-
   def executable_instruction
     fetch_instruction(instr_number)
   end
 
   def operands
     executable_instruction.arity.times.map do |i|
+      arg = @pos + i + 1
       loc = case operand_modes[i]
             when 0
-              @memory[@pos + i + 1]
+              debug "READ ARG #{i} from position #{@memory[arg]}"
+              @memory[arg]
             when 1
-              @pos + i + 1
+              debug "READ ARG #{i} from absolute position #{arg}"
+              arg
             when 2
-              @relative_base + @memory[@pos + i + 1]
+              debug "READ ARG #{i} from relative position #{@relative_base + @memory[arg]}"
+              @relative_base + @memory[arg]
             end
       loc.tap do |val|
-        debug "READ[#{loc}] => #{val}"
         if loc >= @memory.count
           until @memory.count == loc
             @memory << 0
@@ -83,40 +79,70 @@ class Computer
 
   def fetch_instruction(number)
     {
-      1 => -> (a, b, c) { store(@memory[a] + @memory[b], c); @pos += 4 },
-      2 => -> (a, b, c) { store(@memory[a] * @memory[b], c); @pos += 4 },
-      3 => -> (a) { store(@in.pop, a); @pos += 2 },
-      4 => -> (a) { @output.call(@memory[a]); @pos += 2 },
-      5 => -> (a, b) { @memory[a].nonzero? ? @pos = @memory[b] : @pos += 3 },
-      6 => -> (a, b) { @memory[a].zero? ? @pos = @memory[b] : @pos += 3 },
-      7 => -> (a, b, c) { store(@memory[a] < @memory[b] ? 1 : 0, c) ; @pos += 4 },
-      8 => -> (a, b, c) { store(@memory[a] == @memory[b] ? 1 : 0, c) ; @pos += 4 },
-      9 => -> (a) { @relative_base += @memory[a]; @pos += 2 },
-      99 => -> () { debug("CORE DUMP: #{@memory}") ; Thread.exit }
+      1 => -> (a, b, c) do
+        res = @memory[a] + @memory[b]
+        debug "ADD #{@memory[a]} + #{@memory[b]} = #{res}"
+        store(res, c).tap { @pos += 4 }
+      end,
+      2 => -> (a, b, c) do
+        res = @memory[a] * @memory[b]
+        debug "MUL #{@memory[a]} x #{@memory[b]} = #{res}"
+        store(res, c).tap { @pos += 4 }
+      end,
+      3 => -> (a) do
+        val = @in.pop
+        debug "INPUT #{val}"
+        store(val, a).tap { @pos += 2 }
+      end,
+      4 => -> (a) do
+        debug "OUTPUT #{@memory[a]}"
+        @output.call(@memory[a]).tap { @pos += 2 }
+      end,
+      5 => -> (a, b) do
+        res = @memory[a].nonzero?
+        msg = "JNZ loc #{a} is #{@memory[a]}"
+        msg << " (jumping to loc #{@memory[b]})" if res
+        msg << " (no jump)" if !res
+        debug msg
+        res ? @pos = @memory[b] : @pos += 3
+      end,
+      6 => -> (a, b) do
+        res = @memory[a].zero?
+        msg = "JEZ loc #{a} is #{@memory[a]}"
+        msg << " (jumping to loc #{@memory[b]})" if res
+        msg << " (no jump)" if !res
+        debug msg
+        res ? @pos = @memory[b] : @pos += 3
+      end,
+      7 => -> (a, b, c) do
+        res = @memory[a] < @memory[b]
+        debug "LT #{@memory[a]} < #{@memory[b]} = #{res}"
+        store(res ? 1 : 0, c).tap { @pos += 4 }
+      end,
+      8 => -> (a, b, c) do
+        res = @memory[a] == @memory[b]
+        debug "EQ #{@memory[a]} == #{@memory[b]} = #{res}"
+        store(res ? 1 : 0, c).tap { @pos += 4 }
+      end,
+      9 => -> (a) do
+        @relative_base += @memory[a]
+        debug "RB #{@relative_base}"
+        @pos += 2
+        @relative_base
+      end,
+      99 => -> () do
+        debug("CORE DUMP: #{@memory}")
+        Thread.exit
+      end
     }[number]
   end
 
   def store(value, location)
+    debug "WRITE #{value} to #{location}"
     @memory[location] = value
-    debug "WRITE[#{location}] <= #{value}"
-  end
-
-  def instr_name(number)
-    {
-      1 => "ADD",
-      2 => "MUL",
-      3 => "IN",
-      4 => "OUT",
-      5 => "JNZ",
-      6 => "JEZ",
-      7 => "LT",
-      8 => "EQ",
-      9 => "RB",
-      99 => "HALT",
-    }[number]
   end
 
   def debug(msg)
-    puts "[#{@id}] #{msg}" if @debug
+    puts "[#{@id}][#{@pos}] #{msg}" if @debug
   end
 end
