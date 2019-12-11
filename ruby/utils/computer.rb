@@ -132,7 +132,7 @@ class Computer
         @pos += 2
         @relative_base
       end,
-      99 => -> () { Thread.exit }
+      99 => -> () { debug "HALT"; Thread.exit }
     }[number]
   end
 

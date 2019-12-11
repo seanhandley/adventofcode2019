@@ -147,7 +147,7 @@ class Robot
         display[y][x] = colour
       end
     end.each do |row|
-      puts row.map {|el| el == 0 ? "\u001b[32m█" : "\u001b[31m█" }.join
+      puts row.map {|el| el == 0 ? "░" : "█" }.join
     end
   end
 
