@@ -2,35 +2,39 @@
 
 function test {
   pushd "day_$1" > /dev/null
-  FILE="output$1.1.txt"
+  FILE="output$1.$2.txt"
   EXPECTED=$(cat $FILE)
-  CMD="./advent$1.1.rb"
+  CMD="./advent$1.$2.rb"
   ACTUAL=$(cat input.txt | $CMD)
 
   if [[ $EXPECTED == $ACTUAL ]]
-  then echo "OK DAY $1.1"
-  else echo "FAIL DAY $1.1"; echo "EXPECTED: \n'$EXPECTED'"; echo "ACTUAL: \n'$ACTUAL'"
-  fi
-
-  FILE="output$1.2.txt"
-  EXPECTED=$(cat $FILE)
-  CMD="./advent$1.2.rb"
-  ACTUAL=$(cat input.txt | $CMD)
-
-  if [[ $EXPECTED == $ACTUAL ]]
-  then echo "OK DAY $1.2"
-  else echo "FAIL DAY $1.2"; echo "EXPECTED: \n'$EXPECTED'"; echo "ACTUAL: \n'$ACTUAL'"
+  then echo "DAY $1.$2 OK"
+  else echo "DAY $1.$2 FAIL"; echo "EXPECTED: \n'$EXPECTED'"; echo "ACTUAL: \n'$ACTUAL'"
   fi
 
   popd > /dev/null
 }
 
-test 1
-test 2
-test 3
-test 4
-test 5
-test 6
-test 7
-test 8
-test 9
+test 1 1
+test 1 2
+test 2 1
+test 2 2
+test 3 1
+test 3 2
+test 4 1
+test 4 2
+test 5 1
+test 5 2
+test 6 1
+test 6 2
+test 7 1
+test 7 2
+test 8 1
+test 8 2
+test 9 1
+test 9 2
+# test 10 1
+# test 10 2
+test 11 1
+test 11 2
+
