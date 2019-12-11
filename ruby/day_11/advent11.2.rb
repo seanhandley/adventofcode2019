@@ -1,20 +1,13 @@
 #!/usr/bin/env ruby
 
+# --- Part Two ---
+#
+# You're not sure what it's trying to paint, but it's definitely not a registration identifier. The Space Police are getting impatient.
+#
+# Checking your external ship cameras again, you notice a white panel marked "emergency hull painting robot starting panel". The rest of the panels are still black, but it looks like the robot was expecting to start on a white panel, not a black one.
+#
+# Based on the Space Law Space Brochure that the Space Police attached to one of your windows, a valid registration identifier is always eight capital letters. After starting the robot on a single white panel instead, what registration identifier does it paint on your hull?
+
 require_relative "./advent11.1"
 
-@robot = Computer.new(output: @output)
-@robot.receive(1)
-@robot.execute
-
-@display = []
-
-@panels.each do |y, rows|
-  rows.each do |x, colour|
-    @display[y] ||= []
-    @display[y][x] = colour
-  end
-end
-
-@display.each do |row|
-  puts row.map { |el| el == 0 ? " " : "█"}.join
-end
+Robot.new.receive(1).execute.display_panels

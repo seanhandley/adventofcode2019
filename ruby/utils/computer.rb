@@ -30,6 +30,7 @@ class Computer
 
   def execute
     execute_async.join(30)
+    self
   end
 
   def self.fetch_program_from_stdin
