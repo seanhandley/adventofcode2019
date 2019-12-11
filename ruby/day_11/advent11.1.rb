@@ -68,7 +68,8 @@
 require_relative "../utils/computer"
 
 class Robot
-  def initialize(panels: {}, debug: false)
+  def initialize(panels: {}, debug: false, show_progress: false)
+    @show_progress = show_progress
     @panels = panels
     @debug = debug
     @colour = nil
@@ -80,12 +81,12 @@ class Robot
   def output
     -> (data) do
       if @colour.nil?
-        debug "Set colour to: #{data}"
         @colour = data
       else
         paint
         turn(data)
         move
+        display_progress if @show_progress
         @colour = nil
         @brain.receive(@panels.dig(@y, @x) || 0)
       end
@@ -97,11 +98,11 @@ class Robot
   end
 
   def turn(val)
-    debug "Facing #{direction}"
-    debug "Turning #{val == 0 ? 'left' : 'right' }"
+    debug "I'm facing #{direction}!"
+    debug "I'm turning #{val == 0 ? 'left' : 'right' }!"
     index = val == 0 ? -1 : 1
     @directions = @directions.cycle.each_cons(4).take(4)[index]
-    debug "Facing #{direction}"
+    debug "I'm facing #{direction}!"
   end
 
   def move
@@ -115,17 +116,17 @@ class Robot
     when :left
       @x -= 1
     end
-    debug "Moved to #{@x},#{@y}"
+    debug "I moved to tile #{@x}:#{@y}!"
   end
 
   def paint
-    debug "Painting #{@x},#{@y} colour #{@colour}"
+    debug "I'm painting tile #{@x}:#{@y} #{@colour == 0 ? 'black' : 'white'}!"
     @panels[@y] ||= {}
     @panels[@y][@x] = @colour
   end
 
   def debug(msg)
-    puts "[ROBOT] #{msg}" if @debug
+    puts "🤖 < #{msg}" if @debug
   end
 
   def receive(data)
@@ -139,14 +140,21 @@ class Robot
   end
 
   def display_panels
+    debug "Here's your registration number!"
     @panels.each_with_object([]) do |(y, rows), display|
       rows.map do |x, colour|
         display[y] ||= []
         display[y][x] = colour
       end
     end.each do |row|
-      puts row.map { |el| el == 0 ? " " : "█"}.join
+      puts row.map {|el| el == 0 ? "\u001b[32m█" : "\u001b[31m█" }.join
     end
+  end
+
+  def display_progress
+    print "\e[2J\e[f" # clear screen
+    display_panels
+    sleep 0.05
   end
 
   def count_panels
