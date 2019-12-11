@@ -12,6 +12,7 @@ class Computer
   end
 
   def receive(input)
+    debug "RECEIVED #{input}"
     @in << input
     self
   end
@@ -24,7 +25,7 @@ class Computer
         debug(e)
         raise
       end
-    end
+    end.tap { |t| t.send(:at_exit) { debug("CORE DUMP: #{@memory}") } }
   end
 
   def execute
@@ -57,7 +58,7 @@ class Computer
             end
       loc.tap do |val|
         if loc >= @memory.count
-          until @memory.count == loc
+          until @memory.count == loc + 1
             @memory << 0
           end
         end
@@ -130,10 +131,7 @@ class Computer
         @pos += 2
         @relative_base
       end,
-      99 => -> () do
-        debug("CORE DUMP: #{@memory}")
-        Thread.exit
-      end
+      99 => -> () { Thread.exit }
     }[number]
   end
 
