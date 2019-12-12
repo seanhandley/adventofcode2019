@@ -44,62 +44,37 @@
 # How many steps does it take to reach the first state that exactly matches a previous state?
 
 require "set"
-
-Pos = Struct.new(:x, :y, :z)
-Moon = Struct.new(:pos, :vel)
-
-@moons = STDIN.read.split("\n").map do |line|
-  pos = Pos.new *line.match(/x=(\-?\d+), y=(\-?\d+), z=(\-?\d+)/)[1,3].map(&:to_i)
-  Moon.new pos, Pos.new(0, 0, 0)
-end
-
-@prev_x = Set.new
-@prev_y = Set.new
-@prev_z = Set.new
-
-@x_rep, @y_rep, @z_rep = false, false, false
-
-@i = 0
+require_relative "./advent12.1"
 
 def axis_positions(axis)
   @moons.map { |moon|[moon[:pos][axis], moon[:vel][axis]] }
 end
 
-loop do  
-  if !@x_rep && @prev_x.member?(axis_positions(:x))
-    @x_rep = @i
+def check_for_repetitions
+  @axis.each do |axis|
+    if !@rep[axis] && @prev[axis].member?(axis_positions(axis))
+      @rep[axis] = @i
+    end
   end
-  if !@y_rep && @prev_y.member?(axis_positions(:y))
-    @y_rep = @i
-  end
-  if !@z_rep && @prev_z.member?(axis_positions(:z))
-    @z_rep = @i
-  end
+end
 
-  if @x_rep && @y_rep && @z_rep
-    p [@x_rep, @y_rep, @z_rep].reduce(1, :lcm)
+@prev = @axis.each_with_object({}) { |axis, prev| prev[axis] = Set.new }
+@rep  = @axis.each_with_object({}) { |axis, prev| prev[axis] = nil }
+@i = 0
+
+loop do
+  check_for_repetitions
+
+  if @axis.all? { |axis| @rep[axis] }
+    # Find the lowest common multiple
+    p @rep.values.reduce(1, :lcm)
     break
   end
 
-  @prev_x << axis_positions(:x) unless @x_rep
-  @prev_y << axis_positions(:y) unless @y_rep
-  @prev_z << axis_positions(:z) unless @z_rep
+  @axis.each do |axis|
+    @prev[axis].add axis_positions(axis) unless @rep[axis]
+  end
 
-  @moons.combination(2).each do |a, b|
-    [:x, :y, :z].each do |axis|
-      if a[:pos][axis] > b[:pos][axis]
-        a[:vel][axis] -= 1
-        b[:vel][axis] += 1
-      elsif a[:pos][axis] < b[:pos][axis]
-        a[:vel][axis] += 1
-        b[:vel][axis] -= 1
-      end
-    end
-  end
-  @moons.each do |moon|
-    [:x, :y, :z].each do |axis|
-      moon[:pos][axis] += moon[:vel][axis]
-    end
-  end
+  step
   @i += 1
 end

@@ -191,6 +191,8 @@
 Pos = Struct.new(:x, :y, :z)
 Moon = Struct.new(:pos, :vel)
 
+@axis = [:x, :y, :z]
+
 @moons = STDIN.read.split("\n").map do |line|
   pos = Pos.new *line.match(/x=(\-?\d+), y=(\-?\d+), z=(\-?\d+)/)[1,3].map(&:to_i)
   Moon.new pos, Pos.new(0, 0, 0)
@@ -198,9 +200,9 @@ end
 
 @steps = 1000
 
-(1..@steps).each do
+def step
   @moons.combination(2).each do |a, b|
-    [:x, :y, :z].each do |axis|
+    @axis.each do |axis|
       if a[:pos][axis] > b[:pos][axis]
         a[:vel][axis] -= 1
         b[:vel][axis] += 1
@@ -211,20 +213,26 @@ end
     end
   end
   @moons.each do |moon|
-    [:x, :y, :z].each do |axis|
+    @axis.each do |axis|
       moon[:pos][axis] += moon[:vel][axis]
     end
   end
 end
 
-energies = @moons.map do |moon|
-  potential = [:x, :y, :z].sum do |axis|
-    moon[:pos][axis].abs
+(1..@steps).each { step }
+
+def energies
+  @moons.map do |moon|
+    potential = @axis.sum do |axis|
+      moon[:pos][axis].abs
+    end
+    kinetic = @axis.sum do |axis|
+      moon[:vel][axis].abs
+    end
+    potential * kinetic
   end
-  kinetic = [:x, :y, :z].sum do |axis|
-    moon[:vel][axis].abs
-  end
-  potential * kinetic
 end
 
-p energies.sum
+if __FILE__ == $0
+  p energies.sum
+end
