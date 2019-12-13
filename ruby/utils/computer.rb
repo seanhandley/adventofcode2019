@@ -1,7 +1,8 @@
 require "securerandom"
 
 class Computer
-  def initialize(program: nil, output: nil, id: nil, debug: false)
+  def initialize(program: nil, output: nil, ready: nil, id: nil, debug: false)
+    @ready = ready || -> { }
     @id = id || SecureRandom.hex(4)
     @in = Queue.new
     @memory = program || Computer.fetch_program_from_stdin
@@ -29,7 +30,7 @@ class Computer
   end
 
   def execute
-    execute_async.join(30)
+    execute_async.join
     self
   end
 
@@ -92,6 +93,7 @@ class Computer
         store(res, c).tap { @pos += 4 }
       end,
       3 => -> (a) do
+        Thread.new { sleep 0.0001; @ready.call }
         val = @in.pop
         debug "INPUT #{val}"
         store(val, a).tap { @pos += 2 }

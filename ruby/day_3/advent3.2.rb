@@ -32,49 +32,57 @@
 #
 # What is the fewest combined steps the wires must take to reach an intersection?
 
-paths = STDIN.read.split.map { |path| path.split(",").map { |instr| [instr[0], instr[1..-1].to_i] } }
+require_relative "./advent3.1"
 
-coords_with_steps = paths.map do |path|
-  x, y, steps = 0, 0, 0
-  path.map do |instr|
-    direction, distance = instr
-    case direction
-    when "U"
-      (y+1).upto(y += distance).map do |yy|
-        [[x, yy], steps += 1]
+def coords_with_steps
+  @paths.map do |path|
+    x, y, steps = 0, 0, 0
+    path.map do |instr|
+      direction, distance = instr
+      case direction
+      when "U"
+        (y+1).upto(y += distance).map do |yy|
+          [[x, yy], steps += 1]
+        end
+      when "D"
+        (y-1).downto(y -= distance).map do |yy|
+          [[x, yy], steps += 1]
+        end
+      when "L"
+        (x-1).downto(x -= distance).map do |xx|
+          [[xx, y], steps += 1]
+        end
+      when "R"
+        (x+1).upto(x += distance).map do |xx|
+          [[xx, y], steps += 1]
+        end
       end
-    when "D"
-      (y-1).downto(y -= distance).map do |yy|
-        [[x, yy], steps += 1]
-      end
-    when "L"
-      (x-1).downto(x -= distance).map do |xx|
-        [[xx, y], steps += 1]
-      end
-    when "R"
-      (x+1).upto(x += distance).map do |xx|
-        [[xx, y], steps += 1]
-      end
-    end
-  end.flatten(1)
+    end.flatten(1)
+  end
 end
 
-intersections = coords_with_steps.map do |path|
-  path.map { |coords, _steps| coords }
-end.reduce(:&)
-
-matching_intersections_with_steps = intersections.map do |intersection|
+def intersections
   coords_with_steps.map do |path|
-    path.select do |coords, steps|
-      coords == intersection
-    end.sort_by { |_coords, steps| steps }.first
+    path.map { |coords, _steps| coords }
+  end.reduce(:&)
+end
+
+def matching_intersections_with_steps
+  intersections.map do |intersection|
+    coords_with_steps.map do |path|
+      path.select do |coords, steps|
+        coords == intersection
+      end.sort_by { |_coords, steps| steps }.first
+    end
   end
 end
 
-smallest_steps = matching_intersections_with_steps.map do |matching_intersections|
-  matching_intersections.sum do |match|
-    match.last
-  end
-end.sort.first
+def smallest_steps
+  matching_intersections_with_steps.map do |matching_intersections|
+    matching_intersections.sum do |match|
+      match.last
+    end
+  end.sort.first
+end
 
 p smallest_steps

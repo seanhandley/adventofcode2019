@@ -22,3 +22,14 @@ do
     test $i $j
   done
 done
+
+test 13 1
+# test 13 2 # Not possible
+
+# for i in {14..14}
+# do
+#   for j in {1..2}
+#   do
+#     test $i $j
+#   done
+# done

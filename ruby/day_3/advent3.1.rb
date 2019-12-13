@@ -45,31 +45,37 @@
 #
 # What is the Manhattan distance from the central port to the closest intersection?
 
-paths = STDIN.read.split.map { |path| path.split(",").map { |instr| [instr[0], instr[1..-1].to_i] } }
-
-coords = paths.map do |path|
-  x, y = 0, 0
-  path.map do |instr|
-    direction, distance = instr
-    case direction
-    when "U"
-      (y+1).upto(y += distance).map do |yy|
-        [x, yy]
-      end
-    when "D"
-      (y-1).downto(y -= distance).map do |yy|
-        [x, yy]
-      end
-    when "L"
-      (x-1).downto(x -= distance).map do |xx|
-        [xx, y]
-      end
-    when "R"
-      (x+1).upto(x += distance).map do |xx|
-        [xx, y]
-      end
-    end
-  end.flatten(1)
+@paths = STDIN.read.split.map do |path|
+  path.split(",").map { |instr| [instr[0], instr[1..-1].to_i] }
 end
 
-p coords.reduce(:&).map { |x, y| x.abs + y.abs }.sort.first
+def coords
+  @paths.map do |path|
+    x, y = 0, 0
+    path.map do |instr|
+      direction, distance = instr
+      case direction
+      when "U"
+        (y+1).upto(y += distance).map do |yy|
+          [x, yy]
+        end
+      when "D"
+        (y-1).downto(y -= distance).map do |yy|
+          [x, yy]
+        end
+      when "L"
+        (x-1).downto(x -= distance).map do |xx|
+          [xx, y]
+        end
+      when "R"
+        (x+1).upto(x += distance).map do |xx|
+          [xx, y]
+        end
+      end
+    end.flatten(1)
+  end
+end
+
+if __FILE__ == $0
+  p coords.reduce(:&).map { |x, y| x.abs + y.abs }.sort.first
+end

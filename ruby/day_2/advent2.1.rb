@@ -57,9 +57,6 @@ if __FILE__ == $0
   memory = Computer.fetch_program_from_stdin
   memory[1] = 12
   memory[2] = 2
-  Computer.new(program: memory).
-    receive(12).
-    receive(2).
-    execute
+  Computer.new(program: memory).execute
   p memory.first
 end

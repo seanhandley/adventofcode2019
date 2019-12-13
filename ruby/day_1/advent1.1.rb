@@ -24,12 +24,13 @@
 # What is the sum of the fuel requirements for all of the modules on your spacecraft?
 
 module FuelCounter
+  module_function 
+
   def calculate(modules, cost_function)
     modules.split.map(&:to_i).sum do |weight|
       cost_function.(weight)
     end
   end
-  module_function :calculate
 end
 
 cost_function = -> (weight) { weight / 3 - 2 }

@@ -32,7 +32,7 @@ class PasswordValidator
   end
 
   def valid_password_count
-    range.select(&method(:valid?)).count
+    range.count(&method(:valid?))
   end
 
   def valid?(password)
