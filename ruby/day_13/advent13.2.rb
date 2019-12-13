@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 
+require "remedy"
 require_relative "../utils/computer"
+
+include Remedy
 
 @tiles = []
 @sprites = {
@@ -14,14 +17,16 @@ require_relative "../utils/computer"
 @x, @y = nil, nil
 
 @score = 0
+@screen = Viewport.new
+@user_input = Interaction.new
 
 def draw_screen
-  print "\e[2J\e[f" # clear screen
-  display = @tiles.map do |row|
-    row.map { |el| @sprites[el] }.join
+  content = Content.new
+  @tiles.each do |row|
+    content << row.map { |el| @sprites[el] }.join
   end
-  display << "████████████ SCORE: #{@score.to_s.rjust(5, '0')} ████████████"
-  puts display.join("\n")
+  content << "████████████ SCORE: #{@score.to_s.rjust(5, '0')} ████████████"
+  @screen.draw content
 end
 
 @output = -> (data) do
@@ -67,13 +72,37 @@ def direction
   end
 end
 
+@input = 0
+
 @ready = -> do
+  sleep 0.001
   draw_screen
   @computer.receive(direction)
+  @input = 0
 end
 
-@memory = Computer.fetch_program_from_stdin
-@memory[0] = 2
-@computer = Computer.new(program: @memory, output: @output, ready: @ready)
-@computer.execute
-draw_screen
+Thread.new do
+  @user_input.loop do |key|
+    case key.name
+    when "q"
+      exit 0
+    when :up
+      @input = 0
+    when :right
+      @input = 1
+    when :left
+      @input = -1
+    else
+      @input = 0
+    end
+  end
+end
+
+loop do
+  @memory = File.read("input.txt").split(",").map(&:to_i)
+  @memory[0] = 2
+  @computer = Computer.new(program: @memory, output: @output, ready: @ready)
+  @computer.execute
+  draw_screen
+  STDIN.getch
+end
