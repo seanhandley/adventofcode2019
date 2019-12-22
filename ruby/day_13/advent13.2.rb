@@ -26,6 +26,7 @@ def draw_screen
     content << row.map { |el| @sprites[el] }.join
   end
   content << "████████████ SCORE: #{@score.to_s.rjust(5, '0')} ████████████"
+  content << "████████████ SPEED: #{@speed.to_s.rjust(5, '0')} ████████████"
   @screen.draw content
 end
 
@@ -72,13 +73,15 @@ def direction
   end
 end
 
-@input = 0
+@sleep = 64
+@sleep_max = 512
+@speed = 4
+@sleep_min = 1
 
 @ready = -> do
-  sleep 0.001
+  sleep (@sleep / 1000.0)
   draw_screen
   @computer.receive(direction)
-  @input = 0
 end
 
 Thread.new do
@@ -86,14 +89,12 @@ Thread.new do
     case key.name
     when "q"
       exit 0
+    when :down
+      @speed = [@speed - 1, 1].max
+      @sleep = [@sleep * 2, @sleep_max].min
     when :up
-      @input = 0
-    when :right
-      @input = 1
-    when :left
-      @input = -1
-    else
-      @input = 0
+      @speed = [@speed + 1, 10].min
+      @sleep = [@sleep / 2, @sleep_min].max
     end
   end
 end
@@ -104,5 +105,5 @@ loop do
   @computer = Computer.new(program: @memory, output: @output, ready: @ready)
   @computer.execute
   draw_screen
-  STDIN.getch
+  sleep 3
 end

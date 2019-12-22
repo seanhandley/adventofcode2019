@@ -10,4 +10,4 @@
 
 require_relative "./advent11.1"
 
-Robot.new.receive(1).execute.display_panels
+Robot.new(debug: true).receive(1).execute.display_panels
