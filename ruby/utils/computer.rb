@@ -1,15 +1,21 @@
 require "securerandom"
 
 class Computer
-  def initialize(program: nil, output: nil, ready: nil, id: nil, debug: false)
-    @ready = ready || -> { }
+  def initialize(program: nil, output: nil, ready: nil,
+                 id: nil, debug: false, block_io: true)
+    @ready = ready
     @id = id || SecureRandom.hex(4)
     @in = Queue.new
     @memory = program || Computer.fetch_program_from_stdin
     @output = output || -> (msg) { puts msg unless @debug }
     @pos = 0
     @debug = debug
+    @block_io = block_io
     @relative_base = 0
+  end
+
+  def idle?
+    @in.empty?
   end
 
   def receive(input)
@@ -93,8 +99,10 @@ class Computer
         store(res, c).tap { @pos += 4 }
       end,
       3 => -> (a) do
-        Thread.new { sleep 0.0001; @ready.call }
-        val = @in.pop
+        if @ready
+          Thread.new { sleep 0.0001; @ready.call }
+        end
+        val = @in.pop(!@block_io) rescue -1
         debug "INPUT #{val}"
         store(val, a).tap { @pos += 2 }
       end,
