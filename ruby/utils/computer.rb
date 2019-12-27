@@ -24,6 +24,14 @@ class Computer
     self
   end
 
+  def receive_ascii(input)
+    debug "RECEIVED ASCII #{input.inspect}"
+    input.chars.map(&:ord).each do |c|
+      @in << c
+    end
+    self
+  end
+
   def execute_async
     Thread.new do
       loop do
