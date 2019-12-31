@@ -30,8 +30,8 @@ RANGE.to_a.shuffle.each do |noun|
     memory = Computer.fetch_program_from_stdin
     memory[1] = noun
     memory[2] = verb
-    Computer.new(program: memory).execute
-    if memory.first == TARGET
+    res = Computer.new(program: memory).execute.memory.first
+    if res == TARGET
       puts 100 * noun + verb
       exit
     end

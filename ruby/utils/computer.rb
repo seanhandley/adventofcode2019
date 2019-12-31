@@ -1,12 +1,36 @@
 require "securerandom"
 
+class Memory < Array
+  def read(location)
+    grow location
+    fetch location
+  end
+
+  def write(location, value)
+    grow location
+    self[location] = value
+  end
+
+  private
+
+  def grow(location)
+    if location >= size
+      until size == location + 1
+        push 0
+      end
+    end
+  end
+end
+
 class Computer
+  attr_reader :memory
+
   def initialize(program: nil, output: nil, ready: nil,
                  id: nil, debug: false, block_io: true)
     @ready = ready
     @id = id || SecureRandom.hex(4)
     @in = Queue.new
-    @memory = program || Computer.fetch_program_from_stdin
+    @memory = Memory.new(program || Computer.fetch_program_from_stdin)
     @output = output || -> (msg) { puts msg unless @debug }
     @pos = 0
     @debug = debug
@@ -61,23 +85,16 @@ class Computer
   def operands
     executable_instruction.arity.times.map do |i|
       arg = @pos + i + 1
-      loc = case operand_modes[i]
-            when 0
-              debug "READ ARG #{i} from position #{@memory[arg]}"
-              @memory[arg]
-            when 1
-              debug "READ ARG #{i} from absolute position #{arg}"
-              arg
-            when 2
-              debug "READ ARG #{i} from relative position #{@relative_base + @memory[arg]}"
-              @relative_base + @memory[arg]
-            end
-      loc.tap do |val|
-        if loc >= @memory.count
-          until @memory.count == loc + 1
-            @memory << 0
-          end
-        end
+      case operand_modes[i]
+      when 0
+        debug "READ ARG #{i} from position #{@memory.read(arg)}"
+        @memory.read(arg)
+      when 1
+        debug "READ ARG #{i} from absolute position #{arg}"
+        arg
+      when 2
+        debug "READ ARG #{i} from relative position #{@relative_base + @memory.read(arg)}"
+        @relative_base + @memory.read(arg)
       end
     end
   end
@@ -91,19 +108,19 @@ class Computer
   end
 
   def raw_instruction
-    @memory[@pos].to_s.rjust(5, "0")
+    @memory.read(@pos).to_s.rjust(5, "0")
   end
 
   def fetch_instruction(number)
     {
       1 => -> (a, b, c) do
-        res = @memory[a] + @memory[b]
-        debug "ADD #{@memory[a]} + #{@memory[b]} = #{res}"
+        res = @memory.read(a) + @memory.read(b)
+        debug "ADD #{@memory.read(a)} + #{@memory.read(b)} = #{res}"
         store(res, c).tap { @pos += 4 }
       end,
       2 => -> (a, b, c) do
-        res = @memory[a] * @memory[b]
-        debug "MUL #{@memory[a]} x #{@memory[b]} = #{res}"
+        res = @memory.read(a) * @memory.read(b)
+        debug "MUL #{@memory.read(a)} x #{@memory.read(b)} = #{res}"
         store(res, c).tap { @pos += 4 }
       end,
       3 => -> (a) do
@@ -115,37 +132,37 @@ class Computer
         store(val, a).tap { @pos += 2 }
       end,
       4 => -> (a) do
-        debug "OUTPUT #{@memory[a]}"
-        @output.call(@memory[a]).tap { @pos += 2 }
+        debug "OUTPUT #{@memory.read(a)}"
+        @output.call(@memory.read(a)).tap { @pos += 2 }
       end,
       5 => -> (a, b) do
-        res = @memory[a].nonzero?
-        msg = "JNZ loc #{a} is #{@memory[a]}"
-        msg << " (jumping to loc #{@memory[b]})" if res
+        res = @memory.read(a).nonzero?
+        msg = "JNZ loc #{a} is #{@memory.read(a)}"
+        msg << " (jumping to loc #{@memory.read(b)})" if res
         msg << " (no jump)" if !res
         debug msg
-        res ? @pos = @memory[b] : @pos += 3
+        res ? @pos = @memory.read(b) : @pos += 3
       end,
       6 => -> (a, b) do
-        res = @memory[a].zero?
-        msg = "JEZ loc #{a} is #{@memory[a]}"
-        msg << " (jumping to loc #{@memory[b]})" if res
+        res = @memory.read(a).zero?
+        msg = "JEZ loc #{a} is #{@memory.read(a)}"
+        msg << " (jumping to loc #{@memory.read(b)})" if res
         msg << " (no jump)" if !res
         debug msg
-        res ? @pos = @memory[b] : @pos += 3
+        res ? @pos = @memory.read(b) : @pos += 3
       end,
       7 => -> (a, b, c) do
-        res = @memory[a] < @memory[b]
-        debug "LT #{@memory[a]} < #{@memory[b]} = #{res}"
+        res = @memory.read(a) < @memory.read(b)
+        debug "LT #{@memory.read(a)} < #{@memory.read(b)} = #{res}"
         store(res ? 1 : 0, c).tap { @pos += 4 }
       end,
       8 => -> (a, b, c) do
-        res = @memory[a] == @memory[b]
-        debug "EQ #{@memory[a]} == #{@memory[b]} = #{res}"
+        res = @memory.read(a) == @memory.read(b)
+        debug "EQ #{@memory.read(a)} == #{@memory.read(b)} = #{res}"
         store(res ? 1 : 0, c).tap { @pos += 4 }
       end,
       9 => -> (a) do
-        @relative_base += @memory[a]
+        @relative_base += @memory.read(a)
         debug "RB #{@relative_base}"
         @pos += 2
         @relative_base
@@ -156,7 +173,7 @@ class Computer
 
   def store(value, location)
     debug "WRITE #{value} to #{location}"
-    @memory[location] = value
+    @memory.write(location, value)
   end
 
   def debug(msg)
