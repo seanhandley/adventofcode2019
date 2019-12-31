@@ -1,22 +1,15 @@
 #!/usr/bin/env ruby
 
-require "remedy"
 require_relative "../utils/computer"
 
-include Remedy
-
-@screen = Viewport.new
-@user_input = Interaction.new
-
 def draw_screen
-  content = Content.new
+  print "\e[2J\e[f"
   @tiles.each do |row|
-    content << row.join
+    puts row.join
   end
-  @screen.draw content
 end
 
-GRID_SIZE = 200
+GRID_SIZE = 50
 
 @tiles = Array.new(GRID_SIZE) { Array.new(GRID_SIZE) { " " } }
 @x = @y = GRID_SIZE / 2
@@ -28,7 +21,7 @@ def set_wall
   when 1
     @tiles[@y-1][@x] = "#"
   when 2
-    @tiles[@y+2][@x] = "#"
+    @tiles[@y+1][@x] = "#"
   when 3
     @tiles[@y][@x-1] = "#"
   when 4
@@ -57,7 +50,7 @@ def found_oxygen
   when 1
     @tiles[@y-1][@x] = "O"
   when 2
-    @tiles[@y+2][@x] = "O"
+    @tiles[@y+1][@x] = "O"
   when 3
     @tiles[@y][@x-1] = "O"
   when 4
@@ -66,7 +59,6 @@ def found_oxygen
 end
 
 @output = -> (data) do
-  p data
   case data
   when 0
     set_wall
@@ -74,10 +66,12 @@ end
     move_droid
   when 2
     found_oxygen
+    draw_screen
+    exit 0
   end
   draw_screen
-  key = @user_input.get_key
-  case key.name
+  key = [:up, :down, :left, :right].sample
+  case key
   when "q"
     exit 0
   when :up
@@ -92,10 +86,13 @@ end
   when :right
     @last_move = 4
     @droid.receive(@last_move)
+  else
+    @droid.receive(0)
   end
 end
 
 @program = File.read("input.txt").split(",").map(&:to_i)
-@droid = Computer.new(program: @program, output: @output, debug: true)
+@droid = Computer.new(program: @program, output: @output, debug: false)
+
 @droid.receive(@last_move)
 @droid.execute
