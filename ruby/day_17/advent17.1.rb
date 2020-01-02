@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 @buffer = ""
 
@@ -8,7 +8,7 @@ require_relative "../utils/computer"
   @buffer << data.chr
 end
 
-computer = Computer.new(output: @output)
+computer = VM::Computer.new(output: @output)
 computer.execute
 
 @grid = @buffer.split("\n").map { |row| row.chars }

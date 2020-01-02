@@ -65,7 +65,7 @@
 #
 # Build a new emergency hull painting robot and run the Intcode program on it. How many panels does it paint at least once?
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 class Robot
   def initialize(panels: {}, debug: false, show_progress: false)
@@ -75,7 +75,7 @@ class Robot
     @colour = nil
     @directions = [:up, :right, :down, :left]
     @x, @y = 0, 0
-    @brain = Computer.new(output: output, debug: @debug)
+    @brain = VM::Computer.new(output: output, debug: @debug)
   end
 
   def output

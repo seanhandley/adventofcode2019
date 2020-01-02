@@ -51,11 +51,11 @@
 #
 # Once you have a working computer, the first step is to restore the gravity assist program (your puzzle input) to the "1202 program alarm" state it had just before the last computer caught fire. To do this, before running the program, replace position 1 with the value 12 and replace position 2 with the value 2. What value is left at position 0 after the program halts?
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 if __FILE__ == $0
-  memory = Computer.fetch_program_from_stdin
+  memory = VM::Computer.fetch_program_from_stdin
   memory[1] = 12
   memory[2] = 2
-  p Computer.new(program: memory).execute.memory.first
+  p VM::Computer.new(program: memory).execute.memory.first
 end

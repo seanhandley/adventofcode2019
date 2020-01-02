@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 @tiles = []
 
@@ -19,6 +19,6 @@ require_relative "../utils/computer"
   end
 end
 
-Computer.new(output: @output).execute
+VM::Computer.new(output: @output).execute
 
 p @tiles.flatten.select { |t| t == 2 }.count

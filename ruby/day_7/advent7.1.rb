@@ -46,7 +46,7 @@
 #
 # Try every combination of phase settings on the amplifiers. What is the highest signal that can be sent to the thrusters?
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 module LinkedAmplifiers
   class << self
@@ -64,7 +64,7 @@ module LinkedAmplifiers
       phase_permutations.map do |phase_permutation|
         @output = 0
         phase_permutation.each do |phase|
-          Computer.new(output: -> (msg) { @output = msg }).
+          VM::Computer.new(output: -> (msg) { @output = msg }).
             receive(phase).
             receive(@output).
             execute

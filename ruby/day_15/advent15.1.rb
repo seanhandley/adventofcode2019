@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 def draw_screen
   print "\e[2J\e[f"
@@ -92,7 +92,7 @@ end
 end
 
 @program = File.read("input.txt").split(",").map(&:to_i)
-@droid = Computer.new(program: @program, output: @output, debug: false)
+@droid = VM::Computer.new(program: @program, output: @output, debug: false)
 
 @droid.receive(@last_move)
 @droid.execute

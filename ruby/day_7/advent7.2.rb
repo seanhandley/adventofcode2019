@@ -38,7 +38,7 @@
 #
 # Try every combination of the new phase settings on the amplifier feedback loop. What is the highest signal that can be sent to the thrusters?
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 module FeedbackLoopLinkedAmplifiers
   class << self
@@ -66,7 +66,7 @@ module FeedbackLoopLinkedAmplifiers
 
     def setup_amplifiers(permutation)
       config.each_with_object({amplifiers: {}, outputs: []}) do |(name, values), setup|
-        amplifier = Computer.new(id: name, output: -> (data) do
+        amplifier = VM::Computer.new(id: name, output: -> (data) do
           setup[:amplifiers][values[:output]].receive(data)
           setup[:outputs] << data
         end)

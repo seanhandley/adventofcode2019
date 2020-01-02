@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
-@program = Computer.fetch_program_from_stdin
+@program = VM::Computer.fetch_program_from_stdin
 @program[0] = 2
 @instructions = File.read("instructions.txt")
 
-Computer.new(program: @program, output: -> (data) { @dust = data }).
-  receive_ascii(@instructions).
+VM::Computer.new(program: @program, output: -> (data) { @dust = data }).
+  receive(@instructions).
   execute
 
 p @dust

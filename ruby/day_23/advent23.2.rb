@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require "set"
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 RANGE = (0..49)
 
@@ -40,7 +40,7 @@ end
 end
 
 @computers = RANGE.each_with_object({}) do |i, coll|
-  coll[i] = Computer.new(id: i, block_io: false, output: @output_handlers[i]).receive(i)
+  coll[i] = VM::Computer.new(id: i, wait_for_input: false, output: @output_handlers[i]).receive(i)
 end
 
 @threads = @computers.values.map(&:execute_async)

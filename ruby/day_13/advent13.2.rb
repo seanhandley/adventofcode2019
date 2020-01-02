@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require "remedy"
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 include Remedy
 
@@ -102,7 +102,7 @@ end
 loop do
   @memory = File.read("input.txt").split(",").map(&:to_i)
   @memory[0] = 2
-  @computer = Computer.new(program: @memory, output: @output, ready: @ready)
+  @computer = VM::Computer.new(program: @memory, output: @output, ready: @ready)
   @computer.execute
   draw_screen
   sleep 3

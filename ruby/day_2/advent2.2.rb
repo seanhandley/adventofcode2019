@@ -27,10 +27,10 @@ RANGE = 0..99
 
 RANGE.to_a.shuffle.each do |noun|
   RANGE.to_a.shuffle.each do |verb|
-    memory = Computer.fetch_program_from_stdin
+    memory = VM::Computer.fetch_program_from_stdin
     memory[1] = noun
     memory[2] = verb
-    res = Computer.new(program: memory).execute.memory.first
+    res = VM::Computer.new(program: memory).execute.memory.first
     if res == TARGET
       puts 100 * noun + verb
       exit

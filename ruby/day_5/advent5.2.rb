@@ -41,8 +41,8 @@
 #
 # What is the diagnostic code for system ID 5?
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 if __FILE__ == $0
-  Computer.new.receive(5).execute
+  VM::Computer.new.receive(5).execute
 end

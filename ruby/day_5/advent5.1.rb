@@ -51,8 +51,8 @@
 #
 # After providing 1 to the only input instruction and passing all the tests, what diagnostic code does the program produce?
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 if __FILE__ == $0
-  Computer.new.receive(1).execute
+  VM::Computer.new.receive(1).execute
 end

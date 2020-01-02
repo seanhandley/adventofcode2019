@@ -39,6 +39,6 @@
 #
 # Once your Intcode computer is fully functional, the BOOST program should report no malfunctioning opcodes when run in test mode; it should only output a single value, the BOOST keycode. What BOOST keycode does it produce?
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
-Computer.new.receive(1).execute
+VM::Computer.new.receive(1).execute

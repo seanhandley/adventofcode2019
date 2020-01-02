@@ -10,6 +10,6 @@
 
 # Run the BOOST program in sensor boost mode. What are the coordinates of the distress signal?
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
-Computer.new.receive(2).execute
+VM::Computer.new.receive(2).execute

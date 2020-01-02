@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require_relative "../utils/computer"
+require_relative "../vm/computer"
 
 @instructions = <<-EOS
 OR A J
@@ -18,8 +18,8 @@ EOS
   @damage = data
 end
 
-Computer.new(output: @output).
-  receive_ascii(@instructions).
+VM::Computer.new(output: @output).
+  receive(@instructions).
   execute
 
 p @damage
